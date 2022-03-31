@@ -30,7 +30,7 @@ func TestAuditProfile(t *testing.T) {
 
 	for _, tt := range [...]struct {
 		name                     string
-		config                   *configv1.OAuth
+		config                   *configv1.APIServer
 		previouslyObservedConfig map[string]interface{}
 		expected                 map[string]interface{}
 		errors                   []error
@@ -44,35 +44,67 @@ func TestAuditProfile(t *testing.T) {
 		},
 		{
 			name: "disable audit options from scratch",
-			config: &configv1.OAuth{
+			config: &configv1.APIServer{
 				ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
-				Spec: configv1.OAuthSpec{Audit: configv1.OAuthAudit{
-					Profile: configv1.OAuthAuditProfileNone,
-				}},
+				Spec: configv1.APIServerSpec{
+					Audit: configv1.Audit{
+						Profile: configv1.NoneAuditProfileType,
+					},
+				},
 			},
 			previouslyObservedConfig: map[string]interface{}{},
 			expected:                 map[string]interface{}{},
 		},
 		{
 			name: "enable audit options from scratch",
-			config: &configv1.OAuth{
+			config: &configv1.APIServer{
 				ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
-				Spec: configv1.OAuthSpec{Audit: configv1.OAuthAudit{
-					Profile: configv1.OAuthAuditProfileWriteLoginEvents,
-				}},
+				Spec: configv1.APIServerSpec{
+					Audit: configv1.Audit{
+						Profile: configv1.WriteRequestBodiesAuditProfileType,
+					},
+				},
 			},
 			previouslyObservedConfig: map[string]interface{}{},
 			expected:                 auditOpts,
 		},
 		{
 			name: "disable audit profile from enabled",
-			config: &configv1.OAuth{
+			config: &configv1.APIServer{
 				ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
-				Spec: configv1.OAuthSpec{Audit: configv1.OAuthAudit{
-					Profile: configv1.OAuthAuditProfileNone,
-				}},
+				Spec: configv1.APIServerSpec{
+					Audit: configv1.Audit{
+						Profile: configv1.NoneAuditProfileType,
+					},
+				},
 			},
 			previouslyObservedConfig: auditOpts,
+			expected:                 map[string]interface{}{},
+		},
+		{
+			name: "enable audit options with AllRequestBodies",
+			config: &configv1.APIServer{
+				ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
+				Spec: configv1.APIServerSpec{
+					Audit: configv1.Audit{
+						Profile: configv1.AllRequestBodiesAuditProfileType,
+					},
+				},
+			},
+			previouslyObservedConfig: map[string]interface{}{},
+			expected:                 map[string]interface{}{},
+		},
+		{
+			name: "enable audit options with Default",
+			config: &configv1.APIServer{
+				ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
+				Spec: configv1.APIServerSpec{
+					Audit: configv1.Audit{
+						Profile: configv1.DefaultAuditProfileType,
+					},
+				},
+			},
+			previouslyObservedConfig: map[string]interface{}{},
 			expected:                 map[string]interface{}{},
 		},
 	} {

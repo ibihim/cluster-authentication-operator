@@ -51,7 +51,6 @@ func GetOAuthServerArgumentsRaw(operatorConfig *runtime.RawExtension) (map[strin
 	return configDeserialized.Args, nil
 }
 
-
 func ObserveAudit(
 	genericListers configobserver.Listers,
 	recorder events.Recorder,
@@ -64,10 +63,9 @@ func ObserveAudit(
 	listers := genericListers.(configobservation.Listers)
 	var errs []error
 
-	oauthConfig, err := listers.OAuthLister().Get("cluster")
+	apiServer, err := listers.APIServerLister().Get("cluster")
 	if errors.IsNotFound(err) {
-		klog.Warning("oauth.config.openshift.io/cluster: not found")
-		oauthConfig = new(configv1.OAuth)
+		klog.Warning("config.openshift.io/v1/cluster: not found")
 		klog.V(2).Info("xxx there is no oauth")
 	} else if err != nil {
 		klog.V(2).Info("xxx err on get oauth")
@@ -78,8 +76,8 @@ func ObserveAudit(
 	}
 
 	observedConfig := map[string]interface{}{}
-	observedAuditProfile := oauthConfig.Spec.Audit.Profile
-	if observedAuditProfile != configv1.OAuthAuditProfileNone {
+	observedAuditProfile := apiServer.Spec.Audit.Profile
+	if observedAuditProfile != configv1.NoneAuditProfileType {
 		if err := unstructured.SetNestedField(
 			observedConfig,
 			auditOptionsArgs,

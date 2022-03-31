@@ -1,4 +1,4 @@
-package arguments
+package common
 
 import (
 	"fmt"
@@ -13,8 +13,14 @@ var (
 	shellEscapePattern = regexp.MustCompile(`[^\w@%+=:,./-]`)
 )
 
+// ServerArguments is a simple abstraction to flags / options that can be used
+// for any binary. As a flag can be used several times to create a slice of
+// arguments, the value of the map must be a slice of strings.
+// Modeled after net/url/Values.
 type ServerArguments map[string][]string
 
+// Parse parses the ServerArguments from an unstructured json blob into
+// ServerArguments type.
 func Parse(raw map[string]interface{}) (ServerArguments, error) {
 	args := make(ServerArguments)
 
@@ -54,6 +60,8 @@ func shellEscape(s string) string {
 	return s
 }
 
+// Encode encodes the ServerArguments into a single string that can be used in a
+// template for string replacement.
 func Encode(args ServerArguments) string {
 	if len(args) == 0 {
 		return ""
@@ -75,7 +83,7 @@ func Encode(args ServerArguments) string {
 			buf.WriteString("--")
 			buf.WriteString(shellEscape(key))
 			buf.WriteByte('=')
-			buf.WriteString(shellEscape(value)) // escape here
+			buf.WriteString(shellEscape(value))
 		}
 	}
 

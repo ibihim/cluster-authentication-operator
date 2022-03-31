@@ -3,8 +3,8 @@ package deployment
 import (
 	"crypto/sha512"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	"github.com/openshift/cluster-authentication-operator/pkg/arguments"
 	"os"
 	"sort"
 	"strings"
@@ -70,7 +70,7 @@ func getOAuthServerDeployment(
 	container.Env = append(container.Env, proxyConfigToEnvVars(proxyConfig)...)
 
 	// set log level
-	container.Args[0] = strings.Replace(container.Args[0], "${LOG_LEVEL}", "5", -1) // fmt.Sprintf("%d", getLogLevel(operatorConfig.Spec.LogLevel)), -1)
+	container.Args[0] = strings.Replace(container.Args[0], "${LOG_LEVEL}", fmt.Sprintf("%d", getLogLevel(operatorConfig.Spec.LogLevel)), -1)
 
 	idpSyncData, err := getSyncDataFromOperatorConfig(&operatorConfig.Spec.ObservedConfig)
 	if err != nil {
@@ -85,26 +85,22 @@ func getOAuthServerDeployment(
 	templateSpec.Volumes = append(templateSpec.Volumes, v...)
 	container.VolumeMounts = append(container.VolumeMounts, m...)
 
-	argsRaw, err := observeoauth.GetOAuthServerArgumentsRaw(&operatorConfig.Spec.ObservedConfig)
+	argsRaw, err := GetOAuthServerArgumentsRaw(&operatorConfig.Spec.ObservedConfig)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get audit sync data: %w", err)
 	}
 
-	args, err := arguments.Parse(argsRaw)
+	args, err := common.Parse(argsRaw)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse raw server arguments: %w", err)
 	}
 
-	klog.Infof("xxx serverArguments: %s", args)
-
 	container.Args[0] = strings.Replace(
 		container.Args[0],
 		"${SERVER_ARGUMENTS}",
-		arguments.Encode(args),
+		common.Encode(args),
 		1,
 	)
-
-	klog.Info("xxx deployment: %+v", deployment)
 
 	return deployment, nil
 }
@@ -156,4 +152,23 @@ func appendEnvVar(envVars []corev1.EnvVar, envName, envVal string) []corev1.EnvV
 		return append(envVars, corev1.EnvVar{Name: envName, Value: envVal})
 	}
 	return envVars
+}
+
+func GetOAuthServerArgumentsRaw(operatorConfig *runtime.RawExtension) (map[string]interface{}, error) {
+	oauthServerObservedConfig, err := common.UnstructuredConfigFrom(
+		operatorConfig.Raw,
+		configobservation.OAuthServerConfigPrefix,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to grab the operator config: %w", err)
+	}
+
+	configDeserialized := new(struct {
+		Args map[string]interface{} `json:"serverArguments"`
+	})
+	if err := json.Unmarshal(oauthServerObservedConfig, &configDeserialized); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal the observedConfig: %v", err)
+	}
+
+	return configDeserialized.Args, nil
 }

@@ -1,21 +1,18 @@
 package oauth
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/library-go/pkg/operator/configobserver"
 	"github.com/openshift/library-go/pkg/operator/events"
 
-	"github.com/openshift/cluster-authentication-operator/pkg/controllers/common"
 	"github.com/openshift/cluster-authentication-operator/pkg/controllers/configobservation"
 )
 
@@ -32,25 +29,6 @@ var (
 	}
 )
 
-func GetOAuthServerArgumentsRaw(operatorConfig *runtime.RawExtension) (map[string]interface{}, error) {
-	oauthServerObservedConfig, err := common.UnstructuredConfigFrom(
-		operatorConfig.Raw,
-		configobservation.OAuthServerConfigPrefix,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to grab the operator config: %w", err)
-	}
-
-	configDeserialized := new(struct {
-		Args map[string]interface{} `json:"serverArguments"`
-	})
-	if err := json.Unmarshal(oauthServerObservedConfig, &configDeserialized); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal the observedConfig: %v", err)
-	}
-
-	return configDeserialized.Args, nil
-}
-
 func ObserveAudit(
 	genericListers configobserver.Listers,
 	recorder events.Recorder,
@@ -66,11 +44,9 @@ func ObserveAudit(
 	apiServer, err := listers.APIServerLister().Get("cluster")
 	if errors.IsNotFound(err) {
 		klog.Warning("config.openshift.io/v1/cluster: not found")
-		klog.V(2).Info("xxx there is no oauth")
 	} else if err != nil {
-		klog.V(2).Info("xxx err on get oauth")
 		return existingConfig, []error{fmt.Errorf(
-			"xxx get oauth.config.openshift.io/cluster: %w",
+			"failed to get oauth.config.openshift.io/cluster: %w",
 			err,
 		)}
 	}
@@ -83,9 +59,8 @@ func ObserveAudit(
 			auditOptionsArgs,
 			ServerArgumentsPath...,
 		); err != nil {
-			klog.V(2).Info("xxx err on adding nested fields")
 			return existingConfig, append(errs, fmt.Errorf(
-				"xxx set nested field (%s) for profile (%s): %w",
+				"set nested field (%s) for profile (%s): %w",
 				strings.Join(ServerArgumentsPath, "/"),
 				observedAuditProfile,
 				err,
@@ -98,7 +73,6 @@ func ObserveAudit(
 		ServerArgumentsPath...,
 	)
 	if err != nil {
-		klog.V(2).Info("xxx err on getting currrent stuff")
 		return existingConfig, append(errs, err)
 	}
 
@@ -109,10 +83,7 @@ func ObserveAudit(
 			currentAuditProfile,
 			auditOptionsArgs,
 		)
-		klog.V(2).Info("xxx state change")
 	}
-
-	klog.V(2).Infof("xxx observedConfig: %+v", observedConfig)
 
 	return observedConfig, errs
 }

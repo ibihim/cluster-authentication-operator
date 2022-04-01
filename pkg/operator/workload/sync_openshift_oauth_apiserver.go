@@ -2,17 +2,21 @@ package workload
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/openshift/cluster-authentication-operator/pkg/arguments"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 
+	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog/v2"
+
 	operatorv1 "github.com/openshift/api/operator/v1"
 	operatorconfigclient "github.com/openshift/client-go/operator/clientset/versioned/typed/operator/v1"
-	"github.com/openshift/cluster-authentication-operator/pkg/operator/assets"
-	configobservation "github.com/openshift/cluster-authentication-operator/pkg/operator/configobservation/configobservercontroller"
 	"github.com/openshift/library-go/pkg/controller/factory"
 	libgoetcd "github.com/openshift/library-go/pkg/operator/configobserver/etcd"
 	"github.com/openshift/library-go/pkg/operator/events"
@@ -22,11 +26,9 @@ import (
 	"github.com/openshift/library-go/pkg/operator/resource/resourceread"
 	"github.com/openshift/library-go/pkg/operator/status"
 
-	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog/v2"
+	"github.com/openshift/cluster-authentication-operator/pkg/controllers/common"
+	"github.com/openshift/cluster-authentication-operator/pkg/operator/assets"
+	oauthapiconfigobservercontroller "github.com/openshift/cluster-authentication-operator/pkg/operator/configobservation/configobservercontroller"
 )
 
 // nodeCountFunction a function to return count of nodes
@@ -85,12 +87,12 @@ func (c *OAuthAPIServerWorkload) PreconditionFulfilled(ctx context.Context) (boo
 }
 
 func (c *OAuthAPIServerWorkload) preconditionFulfilledInternal(authOperator *operatorv1.Authentication) (bool, error) {
-	argsRaw, err := configobservation.GetAPIServerArgumentsRaw(authOperator.Spec.OperatorSpec)
+	argsRaw, err := GetAPIServerArgumentsRaw(authOperator.Spec.OperatorSpec)
 	if err != nil {
 		return false, err
 	}
 
-	args, err := arguments.Parse(argsRaw)
+	args, err := common.Parse(argsRaw)
 	if err != nil {
 		return false, err
 	}
@@ -132,12 +134,12 @@ func (c *OAuthAPIServerWorkload) syncDeployment(ctx context.Context, authOperato
 		return nil, err
 	}
 
-	argsRaw, err := configobservation.GetAPIServerArgumentsRaw(authOperator.Spec.OperatorSpec)
+	argsRaw, err := GetAPIServerArgumentsRaw(authOperator.Spec.OperatorSpec)
 	if err != nil {
 		return nil, err
 	}
 
-	args, err := arguments.Parse(argsRaw)
+	args, err := common.Parse(argsRaw)
 	if err != nil {
 		return nil, err
 	}
@@ -254,4 +256,40 @@ func toFlagSlice(args map[string][]string) []string {
 		}
 	}
 	return flags
+}
+
+func GetAPIServerArgumentsRaw(authOperatorSpec operatorv1.OperatorSpec) (map[string]interface{}, error) {
+	unstructuredCfg, err := common.UnstructuredConfigFrom(
+		authOperatorSpec.ObservedConfig.Raw,
+		oauthapiconfigobservercontroller.OAuthAPIServerConfigPrefix,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	unstructuredUnsupportedCfg, err := common.UnstructuredConfigFrom(
+		authOperatorSpec.UnsupportedConfigOverrides.Raw,
+		oauthapiconfigobservercontroller.OAuthAPIServerConfigPrefix,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	unstructuredMergedCfg, err := resourcemerge.MergeProcessConfig(
+		nil,
+		unstructuredCfg,
+		unstructuredUnsupportedCfg,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	cfgUnstructured := new(struct {
+		APIServerArguments map[string]interface{} `json:"apiServerArguments"`
+	})
+	if err := json.Unmarshal(unstructuredMergedCfg, cfgUnstructured); err != nil {
+		return nil, err
+	}
+
+	return cfgUnstructured.APIServerArguments, nil
 }

@@ -43,7 +43,7 @@ func TestAuditProfile(t *testing.T) {
 			errors:                   []error{},
 		},
 		{
-			name: "disable audit options from scratch",
+			name: "turn off, from scratch",
 			config: &configv1.APIServer{
 				ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
 				Spec: configv1.APIServerSpec{
@@ -56,7 +56,7 @@ func TestAuditProfile(t *testing.T) {
 			expected:                 map[string]interface{}{},
 		},
 		{
-			name: "enable audit options from scratch",
+			name: "turn on, from scratch",
 			config: &configv1.APIServer{
 				ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
 				Spec: configv1.APIServerSpec{
@@ -69,7 +69,7 @@ func TestAuditProfile(t *testing.T) {
 			expected:                 auditOpts,
 		},
 		{
-			name: "disable audit profile from enabled",
+			name: "turn off, from being turned on",
 			config: &configv1.APIServer{
 				ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
 				Spec: configv1.APIServerSpec{
@@ -82,7 +82,7 @@ func TestAuditProfile(t *testing.T) {
 			expected:                 map[string]interface{}{},
 		},
 		{
-			name: "enable audit options with AllRequestBodies",
+			name: "turn on, with AllRequestBodies",
 			config: &configv1.APIServer{
 				ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
 				Spec: configv1.APIServerSpec{
@@ -92,10 +92,10 @@ func TestAuditProfile(t *testing.T) {
 				},
 			},
 			previouslyObservedConfig: map[string]interface{}{},
-			expected:                 map[string]interface{}{},
+			expected:                 auditOpts,
 		},
 		{
-			name: "enable audit options with Default",
+			name: "turn on, with Default",
 			config: &configv1.APIServer{
 				ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
 				Spec: configv1.APIServerSpec{
@@ -105,7 +105,7 @@ func TestAuditProfile(t *testing.T) {
 				},
 			},
 			previouslyObservedConfig: map[string]interface{}{},
-			expected:                 map[string]interface{}{},
+			expected:                 auditOpts,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestAuditProfile(t *testing.T) {
 			}
 
 			listers := configobservation.Listers{
-				OAuthLister_: configlistersv1.NewOAuthLister(indexer),
+				APIServerLister_: configlistersv1.NewAPIServerLister(indexer),
 			}
 
 			have, errs := oauth.ObserveAudit(listers, events.NewInMemoryRecorder(t.Name()), tt.previouslyObservedConfig)

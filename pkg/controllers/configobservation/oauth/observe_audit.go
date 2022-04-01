@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	ServerArgumentsPath = []string{
+	serverArgumentsPath = []string{
 		"serverArguments",
 	}
 	auditOptionsArgs = map[string]interface{}{
@@ -35,7 +35,7 @@ func ObserveAudit(
 	existingConfig map[string]interface{},
 ) (ret map[string]interface{}, _ []error) {
 	defer func() {
-		ret = configobserver.Pruned(ret, ServerArgumentsPath)
+		ret = configobserver.Pruned(ret, serverArgumentsPath)
 	}()
 
 	listers := genericListers.(configobservation.Listers)
@@ -45,23 +45,27 @@ func ObserveAudit(
 	if errors.IsNotFound(err) {
 		klog.Warning("config.openshift.io/v1/cluster: not found")
 	} else if err != nil {
-		return existingConfig, []error{fmt.Errorf(
+		return existingConfig, append(errs, fmt.Errorf(
 			"failed to get oauth.config.openshift.io/cluster: %w",
 			err,
-		)}
+		))
+	}
+
+	var observedAuditProfile configv1.AuditProfileType
+	if apiServer != nil {
+		observedAuditProfile = apiServer.Spec.Audit.Profile
 	}
 
 	observedConfig := map[string]interface{}{}
-	observedAuditProfile := apiServer.Spec.Audit.Profile
 	if observedAuditProfile != configv1.NoneAuditProfileType {
 		if err := unstructured.SetNestedField(
 			observedConfig,
 			auditOptionsArgs,
-			ServerArgumentsPath...,
+			serverArgumentsPath...,
 		); err != nil {
 			return existingConfig, append(errs, fmt.Errorf(
 				"set nested field (%s) for profile (%s): %w",
-				strings.Join(ServerArgumentsPath, "/"),
+				strings.Join(serverArgumentsPath, "/"),
 				observedAuditProfile,
 				err,
 			))
@@ -70,7 +74,7 @@ func ObserveAudit(
 
 	currentAuditProfile, _, err := unstructured.NestedFieldCopy(
 		existingConfig,
-		ServerArgumentsPath...,
+		serverArgumentsPath...,
 	)
 	if err != nil {
 		return existingConfig, append(errs, err)

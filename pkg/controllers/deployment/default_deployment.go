@@ -74,20 +74,20 @@ func getOAuthServerDeployment(
 
 	idpSyncData, err := getSyncDataFromOperatorConfig(&operatorConfig.Spec.ObservedConfig)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get IDP sync data: %v", err)
+		return nil, fmt.Errorf("unable to get IDP sync data: %v", err)
 	}
 
 	// mount more secrets and config maps
 	v, m, err := idpSyncData.ToVolumesAndMounts()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to transform observed IDP sync data to volumes and mounts: %v", err)
+		return nil, fmt.Errorf("unable to transform observed IDP sync data to volumes and mounts: %v", err)
 	}
 	templateSpec.Volumes = append(templateSpec.Volumes, v...)
 	container.VolumeMounts = append(container.VolumeMounts, m...)
 
 	argsRaw, err := GetOAuthServerArgumentsRaw(&operatorConfig.Spec.ObservedConfig)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get audit sync data: %w", err)
+		return nil, fmt.Errorf("unable to get audit sync data: %w", err)
 	}
 
 	args, err := common.Parse(argsRaw)
@@ -160,7 +160,11 @@ func GetOAuthServerArgumentsRaw(operatorConfig *runtime.RawExtension) (map[strin
 		configobservation.OAuthServerConfigPrefix,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to grab the operator config: %w", err)
+		return nil, fmt.Errorf(
+			"failed to read the operatorconfig prefix %q: %w",
+			configobservation.OAuthServerConfigPrefix,
+			err,
+		)
 	}
 
 	configDeserialized := new(struct {

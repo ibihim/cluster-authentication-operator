@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -146,7 +145,6 @@ func (c *OAuthAPIServerWorkload) syncDeployment(ctx context.Context, authOperato
 
 	// log level verbosity is taken from the spec always
 	args["v"] = []string{loglevelToKlog(authOperator.Spec.LogLevel)}
-	operandFlags := toFlagSlice(args)
 
 	// use string replacer for simple things
 	r := strings.NewReplacer(
@@ -156,7 +154,7 @@ func (c *OAuthAPIServerWorkload) syncDeployment(ctx context.Context, authOperato
 
 	excludedReferences := sets.NewString("${FLAGS}")
 	tmpl = []byte(r.Replace(string(tmpl)))
-	re := regexp.MustCompile("\\$\\{[^}]*}")
+	re := regexp.MustCompile(`\$\{[^}]*}`)
 	if match := re.Find(tmpl); len(match) > 0 && !excludedReferences.Has(string(match)) {
 		return nil, fmt.Errorf("invalid template reference %q", string(match))
 	}
@@ -164,8 +162,9 @@ func (c *OAuthAPIServerWorkload) syncDeployment(ctx context.Context, authOperato
 	required := resourceread.ReadDeploymentV1OrDie(tmpl)
 
 	// use the following routine for things that would require special formatting/padding (yaml)
+	encodedArgs := common.EncodeWithDelimiter(args, " \\\n  ")
 	r = strings.NewReplacer(
-		"${FLAGS}", strings.Join(operandFlags, " \\\n  "),
+		"${FLAGS}", encodedArgs,
 	)
 	for containerIndex, container := range required.Spec.Template.Spec.Containers {
 		for argIndex, arg := range container.Args {
@@ -241,23 +240,7 @@ func loglevelToKlog(logLevel operatorv1.LogLevel) string {
 	}
 }
 
-// taken from apiserver-library-go so that we don't pull k/k dep to this repo
-func toFlagSlice(args map[string][]string) []string {
-	var keys []string
-	for key := range args {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-
-	var flags []string
-	for _, key := range keys {
-		for _, token := range args[key] {
-			flags = append(flags, fmt.Sprintf("--%s=%v", key, token))
-		}
-	}
-	return flags
-}
-
+// GetAPIServerArgumentsRaw
 func GetAPIServerArgumentsRaw(authOperatorSpec operatorv1.OperatorSpec) (map[string]interface{}, error) {
 	unstructuredCfg, err := common.UnstructuredConfigFrom(
 		authOperatorSpec.ObservedConfig.Raw,

@@ -62,7 +62,15 @@ func shellEscape(s string) string {
 
 // Encode encodes the ServerArguments into a single string that can be used in a
 // template for string replacement.
+// By default every newline starts without indents.
 func Encode(args ServerArguments) string {
+	return EncodeWithDelimiter(args, " \\\n")
+}
+
+// EncodeWithDelimiter encodes the ServerArguments into a single string that
+// can be used in a template for string replacement.
+// The delimiter that is used in between of the server arguments must be set.
+func EncodeWithDelimiter(args ServerArguments, delimiter string) string {
 	if len(args) == 0 {
 		return ""
 	}
@@ -78,7 +86,7 @@ func Encode(args ServerArguments) string {
 		values := args[key]
 		for _, value := range values {
 			if buf.Len() > 0 {
-				buf.WriteString(" \\\n")
+				buf.WriteString(delimiter)
 			}
 			buf.WriteString("--")
 			buf.WriteString(shellEscape(key))

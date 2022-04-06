@@ -193,7 +193,7 @@ func getAndUpdateComponentRoute(t *testing.T, configClient *configclient.Clients
 	return wait.PollImmediate(time.Second, time.Minute, func() (bool, error) {
 		ingressConfig, err := configClient.ConfigV1().Ingresses().Get(context.TODO(), "cluster", metav1.GetOptions{})
 		if errors.IsNotFound(err) {
-			t.Logf("Unable to retrieve ingress config: %v", err)
+			t.Logf("unable to retrieve ingress config: %v", err)
 			return false, nil
 		}
 		if err != nil {
@@ -225,11 +225,11 @@ func checkRouteHostname(t *testing.T, routeClient *routeclient.Clientset, routeN
 	return wait.PollImmediate(time.Second, time.Minute, func() (bool, error) {
 		route, err := routeClient.RouteV1().Routes(routeNamespace).Get(context.TODO(), routeName, metav1.GetOptions{})
 		if errors.IsNotFound(err) {
-			t.Logf("Unable to retrieve route: %v", err)
+			t.Logf("unable to retrieve route: %v", err)
 			return false, nil
 		}
 		if err != nil {
-			t.Logf("Unable to retrieve route: %v", err)
+			t.Logf("unable to retrieve route: %v", err)
 			return false, err
 		}
 		return route.Spec.Host == hostname, nil
@@ -241,7 +241,7 @@ func removeComponentRoute(t *testing.T, configClient *configclient.Clientset, na
 	return wait.PollImmediate(time.Second, time.Minute, func() (bool, error) {
 		ingressConfig, err := configClient.ConfigV1().Ingresses().Get(context.TODO(), "cluster", metav1.GetOptions{})
 		if errors.IsNotFound(err) {
-			t.Logf("Unable to retrieve ingress config: %v", err)
+			t.Logf("unable to retrieve ingress config: %v", err)
 			return false, nil
 		}
 		if err != nil {

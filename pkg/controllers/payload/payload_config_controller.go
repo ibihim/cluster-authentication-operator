@@ -95,7 +95,7 @@ func (c *payloadConfigController) getAuthConfig(ctx context.Context) (*operatorv
 				Type:    "OAuthConfigDegraded",
 				Status:  operatorv1.ConditionTrue,
 				Reason:  "GetFailed",
-				Message: fmt.Sprintf("Unable to get cluster authentication config: %v", err),
+				Message: fmt.Sprintf("unable to get cluster authentication config: %v", err),
 			},
 		}
 	}
@@ -217,7 +217,7 @@ func (c *payloadConfigController) handleOAuthConfig(ctx context.Context, operato
 				Type:    "OAuthConfigDegraded",
 				Status:  operatorv1.ConditionTrue,
 				Reason:  "GetOAuthServerConfigFailed",
-				Message: fmt.Sprintf("Unable to get oauth-server configuration: %v", err),
+				Message: fmt.Sprintf("unable to get oauth-server configuration: %v", err),
 			},
 		}
 	}
@@ -229,7 +229,7 @@ func (c *payloadConfigController) handleOAuthConfig(ctx context.Context, operato
 				Type:    "OAuthConfigDegraded",
 				Status:  operatorv1.ConditionTrue,
 				Reason:  "GetOAuthServerUnsupportedConfigFailed",
-				Message: fmt.Sprintf("Unable to get oauth-server configuration: %v", err),
+				Message: fmt.Sprintf("unable to get oauth-server configuration: %v", err),
 			},
 		}
 	}

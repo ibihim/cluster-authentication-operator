@@ -19,7 +19,7 @@ func GetIngressConfig(ingressLister configv1lister.IngressLister, conditionPrefi
 			Type:    conditionPrefix + "Degraded",
 			Status:  operatorv1.ConditionTrue,
 			Reason:  "NotFound",
-			Message: fmt.Sprintf("Unable to get cluster ingress config: %v", err),
+			Message: fmt.Sprintf("unable to get cluster ingress config: %v", err),
 		}}
 	}
 	if len(ingress.Spec.Domain) == 0 {

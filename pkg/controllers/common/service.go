@@ -16,7 +16,7 @@ func GetOAuthServerService(serviceLister v1.ServiceLister, conditionPrefix strin
 				Type:    conditionPrefix + "Degraded",
 				Status:  operatorv1.ConditionTrue,
 				Reason:  "GetFailed",
-				Message: fmt.Sprintf("Unable to get oauth server service: %v", err),
+				Message: fmt.Sprintf("unable to get oauth server service: %v", err),
 			},
 		}
 	}

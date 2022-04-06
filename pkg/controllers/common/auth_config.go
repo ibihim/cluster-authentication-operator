@@ -17,7 +17,7 @@ func GetAuthConfig(authLister configv1lister.AuthenticationLister, conditionPref
 				Type:    conditionPrefix + "Degraded",
 				Status:  operatorv1.ConditionTrue,
 				Reason:  "GetFailed",
-				Message: fmt.Sprintf("Unable to get cluster authentication config: %v", err),
+				Message: fmt.Sprintf("unable to get cluster authentication config: %v", err),
 			},
 		}
 	}

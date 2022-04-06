@@ -99,7 +99,7 @@ func (c *serviceCAController) getServiceCA(ctx context.Context, recorder events.
 			Type:    "SystemServiceCAConfigDegraded",
 			Status:  operatorv1.ConditionTrue,
 			Reason:  "Error",
-			Message: fmt.Sprintf("Unable to get or create system service CA config %q: %v", "v4-0-config-system-service-ca", err),
+			Message: fmt.Sprintf("unable to get or create system service CA config %q: %v", "v4-0-config-system-service-ca", err),
 		}}, nil
 	}
 

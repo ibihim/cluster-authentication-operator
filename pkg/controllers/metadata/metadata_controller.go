@@ -88,7 +88,7 @@ func (c *metadataController) handleOAuthMetadataConfigMap(ctx context.Context, r
 			Type:    "RouteDegraded",
 			Status:  operatorv1.ConditionTrue,
 			Reason:  "FailedGet",
-			Message: fmt.Sprintf("Unable to get required route %s/%s: %v", "openshift-authentication", "oauth-openshift", err),
+			Message: fmt.Sprintf("unable to get required route %s/%s: %v", "openshift-authentication", "oauth-openshift", err),
 		}}
 	}
 	if len(route.Status.Ingress) == 0 || len(route.Status.Ingress[0].Host) == 0 {
@@ -129,7 +129,7 @@ func (c *metadataController) handleAuthConfig(ctx context.Context) []operatorv1.
 			Type:    "AuthConfigDegraded",
 			Status:  operatorv1.ConditionTrue,
 			Reason:  "FailedGet",
-			Message: fmt.Sprintf("Unable to get cluster authentication config: %v", err),
+			Message: fmt.Sprintf("unable to get cluster authentication config: %v", err),
 		}}
 	}
 
@@ -147,7 +147,7 @@ func (c *metadataController) handleAuthConfig(ctx context.Context) []operatorv1.
 			Type:    "AuthConfigDegraded",
 			Status:  operatorv1.ConditionTrue,
 			Reason:  "UpdateStatusFailed",
-			Message: fmt.Sprintf("Unable to update status of cluster authentication config: %v", err),
+			Message: fmt.Sprintf("unable to update status of cluster authentication config: %v", err),
 		}}
 	}
 	return nil

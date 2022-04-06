@@ -85,7 +85,7 @@ func TestRouterCerts(t *testing.T) {
 	err = wait.PollImmediate(time.Second, 10*time.Minute, func() (bool, error) {
 		config, err := operatorClientset.OperatorV1().Authentications().Get(context.TODO(), "cluster", metav1.GetOptions{})
 		if errors.IsNotFound(err) {
-			t.Logf("Unable to retrieve operator config: %v", err)
+			t.Logf("unable to retrieve operator config: %v", err)
 			return false, nil
 		}
 		if err != nil {

@@ -804,7 +804,7 @@ func loadSystemCACertBundle() ([]byte, error) {
 	systemCABundle, err := ioutil.ReadFile("/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem")
 	if err != nil {
 		// this may fail route-health checks in proxy environments
-		klog.Warningf("Unable to read system CA from /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem: %v", err)
+		klog.Warningf("unable to read system CA from /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem: %v", err)
 		return nil, nil // trust noone
 	}
 

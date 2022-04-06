@@ -27,7 +27,7 @@ func GetOAuthServerRoute(routeLister routev1lister.RouteLister, conditionPrefix 
 				Type:    conditionPrefix + "Degraded",
 				Status:  operatorv1.ConditionTrue,
 				Reason:  "GetFailed",
-				Message: fmt.Sprintf("Unable to get 'openshift-authentication/oauth-openshift' route: %v", err),
+				Message: fmt.Sprintf("unable to get 'openshift-authentication/oauth-openshift' route: %v", err),
 			},
 		}
 	}
